@@ -72,19 +72,22 @@ def compress_photo():
     '''调用压缩图片的函数
     '''
     src_dir, des_dir = "photos/", "min_photos/"
+    
     if directory_exists(src_dir):
+        if not directory_exists(src_dir):
+            make_directory(src_dir)
+        # business logic
+        file_list_src = list_img_file(src_dir)
+    if directory_exists(des_dir):
         if not directory_exists(des_dir):
             make_directory(des_dir)
-        # business logic
-        file_list = list_img_file(src_dir)
+        file_list_des = list_img_file(src_dir)
         # print file_list
-        if file_list:
-            print_help()
-            compress('4', des_dir, src_dir, file_list)   
-        else:
-            pass
-    else:
-        print("source directory not exist!")    
+    '''如果已经压缩了，就不再压缩'''
+    for i in range(len(file_list_des)):
+        if file_list_des[i] in file_list_src:
+            file_list_src.remove(file_list_des[i])
+    compress('4', des_dir, src_dir, file_list_src)
 
 def handle_photo():
     '''根据图片的文件名处理成需要的json格式的数据
@@ -136,8 +139,8 @@ def cut_photo():
     """
     src_dir = "photos/"
     if directory_exists(src_dir):
-        if not directory_exists(des_dir):
-            make_directory(des_dir)
+        if not directory_exists(src_dir):
+            make_directory(src_dir)
         # business logic
         file_list = list_img_file(src_dir)
         # print file_list

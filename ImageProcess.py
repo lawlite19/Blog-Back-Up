@@ -68,12 +68,14 @@ class Graphics:
         (x, y) = im.size  
         if x > y:  
             region = (int(x/2-y/2), 0, int(x/2+y/2), y)  
+            #裁切图片  
+            crop_img = im.crop(region)  
+            #保存裁切后的图片  
+            crop_img.save(self.outfile)             
         elif x < y:  
-            region = (0, int(y/2-x/2), x, int(y/2+x/2))  
-        else:  
-            region = (0, 0, x, y)  
+            region = (0, int(y/2-x/2), x, int(y/2+x/2))
+            #裁切图片  
+            crop_img = im.crop(region)  
+            #保存裁切后的图片  
+            crop_img.save(self.outfile)             
 
-        #裁切图片  
-        crop_img = im.crop(region)  
-        #保存裁切后的图片  
-        crop_img.save(self.outfile) 
