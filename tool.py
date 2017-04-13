@@ -84,6 +84,7 @@ def handle_photo():
         for i in range(len(file_list)):
             filename = file_list[i]
             date_str, info = filename.split("_")
+            info, _ = info.split(".")
             date = datetime.strptime(date_str, "%Y-%m-%d")
             year_month = date_str[0:7]            
             if i == 0:  # 处理第一个文件
@@ -108,13 +109,20 @@ def handle_photo():
                 list_info[-1]['arr']['link'].append(filename)
                 list_info[-1]['arr']['text'].append(info)
                 list_info[-1]['arr']['type'].append('image')
+    list_info.reverse()  # 翻转
     final_dict = {"list": list_info}
     with open("../lawlite19.github.io/source/photos/data.json","w") as fp:
         json.dump(final_dict, fp)
-                
+
+def git_operation():
+    os.system('git add --all')
+    os.system('git commit -m "add photos"')
+    os.system('git push origin master')
 
 if __name__ == "__main__":
-    #compress_photo()
+    compress_photo()
+    git_operation()
     handle_photo()
+    
     
     
