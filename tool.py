@@ -81,7 +81,7 @@ def compress_photo():
     if directory_exists(des_dir):
         if not directory_exists(des_dir):
             make_directory(des_dir)
-        file_list_des = list_img_file(src_dir)
+        file_list_des = list_img_file(des_dir)
         # print file_list
     '''如果已经压缩了，就不再压缩'''
     for i in range(len(file_list_des)):
