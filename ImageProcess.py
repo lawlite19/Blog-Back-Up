@@ -4,10 +4,16 @@ import shutil
 import os  
 
 class Graphics:  
+    '''图片处理类
+    
+    参数
+    -------
+    infile: 输入文件路径
+    outfile: 输出文件路径
+    '''
     def __init__(self, infile, outfile):
         self.infile = infile
         self.outfile = outfile
-
 
     def fixed_size(self, width, height):  
         """按照固定尺寸处理图片"""  
@@ -52,8 +58,12 @@ class Graphics:
             shutil.copy(self.infile, self.outfile)  
 
   
-    def cut_by_ratio(self, width, height):  
-        """按照图片长宽比进行分割"""  
+    def cut_by_ratio(self):  
+        """按照图片长宽进行分割
+        
+        ------------
+        取中间的部分，裁剪成正方形
+        """  
         im = Image.open(self.infile)  
         (x, y) = im.size  
         if x > y:  
