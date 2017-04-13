@@ -4,6 +4,7 @@ import os
 import sys
 import json
 from datetime import datetime
+from ImageProcess import Graphics
 
 # 定义可以识别的图片文件类型，可以自行扩充
 valid_file_type = ['jpg', 'png', 'gif']
@@ -31,7 +32,7 @@ def list_img_file(directory):
     new_list = []
     for filename in old_list:
         name, fileformat = filename.split(".")
-        if fileformat == "jpg" or fileformat == "png" or fileformat == "gif":
+        if fileformat.lower() == "jpg" or fileformat.lower() == "png" or fileformat.lower() == "gif":
             new_list.append(filename)
     # print new_list
     return new_list
@@ -114,6 +115,29 @@ def handle_photo():
     with open("../lawlite19.github.io/source/photos/data.json","w") as fp:
         json.dump(final_dict, fp)
 
+def cut_photo():
+    """裁剪算法，指定宽高数值进行裁剪"""
+    src_dir, des_dir = "photos/", "min_photos/"
+    width = 30
+    height = 30 
+    if directory_exists(src_dir):
+        if not directory_exists(des_dir):
+            make_directory(des_dir)
+        # business logic
+        file_list = list_img_file(src_dir)
+        # print file_list
+        if file_list:
+            print_help()
+            for infile in file_list:
+                #img = Image.open(src_dir+infile)
+                Graphics(infile=src_dir+infile, outfile=des_dir + infile).cut_by_ratio(width, height)            
+        else:
+            pass
+    else:
+        print("source directory not exist!")     
+
+
+
 def git_operation():
     os.system('git add --all')
     os.system('git commit -m "add photos"')
@@ -123,6 +147,7 @@ if __name__ == "__main__":
     compress_photo()
     git_operation()
     handle_photo()
+    #cut_photo()
     
     
     
