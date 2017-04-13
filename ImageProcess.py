@@ -55,13 +55,11 @@ class Graphics:
     def cut_by_ratio(self, width, height):  
         """按照图片长宽比进行分割"""  
         im = Image.open(self.infile)  
-        width = float(width)  
-        height = float(height)  
         (x, y) = im.size  
-        if width > height:  
-            region = (0, int((y-(y * (height / width)))/2), x, int((y+(y * (height / width)))/2))  
-        elif width < height:  
-            region = (int((x-(x * (width / height)))/2), 0, int((x+(x * (width / height)))/2), y)  
+        if x > y:  
+            region = (int(x/2-y/2), 0, int(x/2+y/2), y)  
+        elif x < y:  
+            region = (0, int(y/2-x/2), x, int(y/2+x/2))  
         else:  
             region = (0, 0, x, y)  
 

@@ -12,6 +12,7 @@ valid_file_type = ['jpg', 'png', 'gif']
 SIZE_normal = 1.0
 SIZE_small = 1.5
 SIZE_more_small = 2.0
+SIZE_more_small_small = 3.0
 
 
 def make_directory(directory):
@@ -55,6 +56,8 @@ def compress(choose, des_dir, src_dir, file_list):
         scale = SIZE_small
     if choose == '3':
         scale = SIZE_more_small
+    if choose == '4':
+        scale = SIZE_more_small_small
     for infile in file_list:
         img = Image.open(src_dir+infile)
         # size_of_file = os.path.getsize(infile)
@@ -71,7 +74,7 @@ def compress_photo():
         # print file_list
         if file_list:
             print_help()
-            compress('3', des_dir, src_dir, file_list)   
+            compress('4', des_dir, src_dir, file_list)   
         else:
             pass
     else:
@@ -81,35 +84,34 @@ def handle_photo():
     src_dir, des_dir = "photos/", "min_photos/"
     file_list = list_img_file(src_dir)
     list_info = []
-    if file_list:
-        for i in range(len(file_list)):
-            filename = file_list[i]
-            date_str, info = filename.split("_")
-            info, _ = info.split(".")
-            date = datetime.strptime(date_str, "%Y-%m-%d")
-            year_month = date_str[0:7]            
-            if i == 0:  # 处理第一个文件
-                new_dict = {"date": year_month, "arr":{'year': date.year,
-                                                                       'month': date.month,
-                                                                       'link': [filename],
-                                                                       'text': [info],
-                                                                       'type': ['image']
-                                                                       }
-                                            } 
-                list_info.append(new_dict)
-            elif year_month != list_info[-1]['date']:  # 不是最后的一个日期，就新建一个dict
-                new_dict = {"date": year_month, "arr":{'year': date.year,
-                                                       'month': date.month,
-                                                       'link': [filename],
-                                                       'text': [info],
-                                                       'type': ['image']
-                                                       }
-                            }
-                list_info.append(new_dict)
-            else:  # 同一个日期
-                list_info[-1]['arr']['link'].append(filename)
-                list_info[-1]['arr']['text'].append(info)
-                list_info[-1]['arr']['type'].append('image')
+    for i in range(len(file_list)):
+        filename = file_list[i]
+        date_str, info = filename.split("_")
+        info, _ = info.split(".")
+        date = datetime.strptime(date_str, "%Y-%m-%d")
+        year_month = date_str[0:7]            
+        if i == 0:  # 处理第一个文件
+            new_dict = {"date": year_month, "arr":{'year': date.year,
+                                                                   'month': date.month,
+                                                                   'link': [filename],
+                                                                   'text': [info],
+                                                                   'type': ['image']
+                                                                   }
+                                        } 
+            list_info.append(new_dict)
+        elif year_month != list_info[-1]['date']:  # 不是最后的一个日期，就新建一个dict
+            new_dict = {"date": year_month, "arr":{'year': date.year,
+                                                   'month': date.month,
+                                                   'link': [filename],
+                                                   'text': [info],
+                                                   'type': ['image']
+                                                   }
+                        }
+            list_info.append(new_dict)
+        else:  # 同一个日期
+            list_info[-1]['arr']['link'].append(filename)
+            list_info[-1]['arr']['text'].append(info)
+            list_info[-1]['arr']['type'].append('image')
     list_info.reverse()  # 翻转
     final_dict = {"list": list_info}
     with open("../lawlite19.github.io/source/photos/data.json","w") as fp:
@@ -129,8 +131,8 @@ def cut_photo():
         if file_list:
             print_help()
             for infile in file_list:
-                #img = Image.open(src_dir+infile)
-                Graphics(infile=src_dir+infile, outfile=des_dir + infile).cut_by_ratio(width, height)            
+                img = Image.open(src_dir+infile)
+                Graphics(infile=src_dir+infile, outfile=src_dir + infile).cut_by_ratio(width, height)            
         else:
             pass
     else:
@@ -139,15 +141,22 @@ def cut_photo():
 
 
 def git_operation():
+    '''
+    git 命令行函数，将仓库提交
+    
+    ----------
+    需要安装git命令行工具
+    '''
     os.system('git add --all')
     os.system('git commit -m "add photos"')
     os.system('git push origin master')
 
 if __name__ == "__main__":
-    compress_photo()
-    git_operation()
-    handle_photo()
-    #cut_photo()
+    #cut_photo()        # 裁剪图片，裁剪成正方形，去中间部分
+    compress_photo()   # 压缩图片，并保存到mini_photos文件夹下
+    git_operation()    # 提交到github仓库
+    handle_photo()     # 将文件处理成json格式，存到博客仓库中
+    
     
     
     
