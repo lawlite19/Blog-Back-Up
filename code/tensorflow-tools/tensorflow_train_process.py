@@ -1,15 +1,17 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # Author: Lawlite
 # Date: 2017/07/26
-# Associate Blog: http://lawlite.me/2017/06/24/Tensorflow学习-工具相关/#1、可视化计算图
+# Associate Blog: http://lawlite.me/2017/06/24/Tensorflow学习-工具相关/#2、可视化训练过程
 # License: MIT
 
-'''此文件可视化神经网络的结构
+
+'''此文件可视化神经网络的权重，loss等信息
    - 最后执行 tensorboard --logdir=logs/ 命令即可， 在浏览器中localhost:6006查看即可
 '''
 
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
+import numpy as np
 
 print("tensorflow版本：", tf.__version__)
 
@@ -35,18 +37,28 @@ n_inputs = 28
 
 '''定义添加一层全连接层'''
 def add_fully_layer(inputs, input_size, output_size, num_layer, activation=None):
-    with tf.name_scope('layer_'+num_layer):
+    layer_name = 'layer_' + num_layer
+    with tf.name_scope(layer_name):
         with tf.name_scope('Weights'):
-            W = tf.Variable(initial_value=tf.random_normal(shape=[input_size, output_size]), name='W')
+            low = -4*np.sqrt(6.0/(input_size + output_size)) # use 4 for sigmoid, 1 for tanh activation 
+            high = 4*np.sqrt(6.0/(input_size + output_size))
+            #'''xavier方法初始化'''
+            ##sigmoid
+            #Weights = tf.Variable(tf.random_uniform(shape=[input_size, output_size], minval=low, maxval=high, dtype=tf.float32), name='W')
+            ##relu
+            W = tf.Variable(initial_value=tf.random_uniform(shape=[input_size, output_size], minval=low, maxval=high, dtype=tf.float32)/2, name='W')
+            tf.summary.histogram(name=layer_name+'/Weights', values=W)  # summary.histogram
         with tf.name_scope('biases'):
             b = tf.Variable(initial_value=tf.zeros(shape=[1, output_size]) + 0.1, name='b')
+            tf.summary.histogram(name=layer_name+'/biases', values=b)    # summary.histogram
         with tf.name_scope('Wx_plus_b'):
             Wx_plus_b = tf.matmul(inputs, W) + b
         if activation is not None:
             outputs = activation(Wx_plus_b)
         else:
             outputs = Wx_plus_b
-        return outputs
+        tf.summary.histogram(name=layer_name+'/outputs', values=outputs)   # summary.histogram
+    return outputs
 '''CNN 定义添加一层卷积层，包括pooling(使用maxpooling, size=2)'''
 def add_conv_layer(inputs, filter_size, input_channels, output_channels, num_layer, activation=tf.nn.relu):
     with tf.name_scope('conv_layer_'+num_layer):
@@ -90,17 +102,17 @@ def add_RNN_Cell(inputs):
 # ==================================================      
 '''placehoder'''
 with tf.name_scope('inputs'):
-    #x = tf.placeholder(tf.float32, shape=[None, img_flatten_size], name='x')
-    #y = tf.placeholder(tf.float32, shape=[None, num_classes], name='y')
-    #x_image = tf.reshape(x, shape = [-1, img_size, img_size, n_channels], name='x_images')
-    '''RNN'''
-    x = tf.placeholder(tf.float32, shape=[batch_size, n_steps, n_inputs], name='x')
-    y = tf.placeholder(tf.float32, shape=[batch_size, num_classes], name='y')
+    x = tf.placeholder(tf.float32, shape=[None, img_flatten_size], name='x')
+    y = tf.placeholder(tf.float32, shape=[None, num_classes], name='y')
+    x_image = tf.reshape(x, shape=[-1, img_size, img_size, n_channels], name='x_images')
+    #'''RNN'''
+    #x = tf.placeholder(tf.float32, shape=[batch_size, n_steps, n_inputs], name='x')
+    #y = tf.placeholder(tf.float32, shape=[batch_size, num_classes], name='y')
     
 
 '''全连接网络结构'''
-#hidden_layer1 = add_fully_layer(x, img_flatten_size, 20, '1', activation=tf.nn.relu)
-#logits = add_fully_layer(hidden_layer1, 20, num_classes, '2')
+hidden_layer1 = add_fully_layer(x, img_flatten_size, 400, '1', activation=tf.nn.relu)
+logits = add_fully_layer(hidden_layer1, 400, num_classes, '2')
 
 
 '''CNN卷积网络结构'''
@@ -116,8 +128,8 @@ with tf.name_scope('inputs'):
 #logits = add_fully_layer(hidden_layer1, 1000, num_classes, num_layer='2')
 
 
-'''RNN网络结构'''
-logits = add_RNN_Cell(inputs=x)
+#'''RNN网络结构'''
+#logits = add_RNN_Cell(inputs=x)
 
 
 predictions = tf.nn.softmax(logits)    
@@ -127,10 +139,31 @@ cross_entropy = -tf.reduce_sum(y*tf.log(predictions), reduction_indices=[1])
 #square_error = tf.reduce_sum(tf.square(y-logits), reduction_indices=[1])
 with tf.name_scope('losses'):
     losses = tf.reduce_mean(cross_entropy)
+    tf.summary.scalar(name='loss_value', tensor=losses)
 with tf.name_scope('train'):
     train_step = tf.train.AdamOptimizer(learning_rate).minimize(losses)
+correct_pred = tf.equal(tf.argmax(predictions, axis=1), tf.argmax(y, axis=1))
+accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
-'''session'''
-with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
-    writer = tf.summary.FileWriter('logs', sess.graph)  # 将计算图写入文件
+'''训练'''
+def optimize(n_epochs):
+    with tf.Session() as sess:
+        merged = tf.summary.merge_all()
+        writer = tf.summary.FileWriter('logs', sess.graph)  # 将计算图写入文件
+        sess.run(tf.global_variables_initializer())
+        for i in range(n_epochs):
+            batch_x, batch_y = data.train.next_batch(batch_size)
+            feed_dict_train = {x: batch_x, y: batch_y}
+            sess.run(train_step, feed_dict=feed_dict_train)
+            if i % 20 == 0:
+                print("epoch:{0}, accuracy:{1}".format(i, sess.run(accuracy, feed_dict=feed_dict_train)))
+                merged_result = sess.run(merged, feed_dict=feed_dict_train)   # 执行merged
+                writer.add_summary(summary=merged_result, global_step=i)      # 加入到writer
+optimize(1001)
+        
+        
+
+
+
+
+
