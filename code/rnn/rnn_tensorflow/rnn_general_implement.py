@@ -326,25 +326,25 @@ def generate_characters(g, checkpoint, num_chars, prompt='A', pick_top_chars=Non
 
 
 '''1、构建图和训练'''
-#start_time = time.time()
-###g = build_basic_rnn_graph_with_list()
-###g = build_multilayer_lstm_graph_with_dynamic_rnn()
-###g = build_multilayer_lstm_graph_with_scan()
-#g = build_final_graph(cell_type='LN_LSTM', state_size=state_size, 
-                     #num_classes=num_classes, 
-                     #batch_size=batch_size, 
-                     #num_steps=num_steps, num_layers=3, 
-                     #build_with_dropout=False, 
-                     #learning_rate=learning_rate)
-#print("构建图耗时", time.time()-start_time)
-#start_time = time.time()
-#losses = train_rnn(g, 2, save='saves/LN_LSTM_2_epochs')
-#print("训练耗时：", time.time()-start_time)
-#print('1',losses[-1])
+start_time = time.time()
+##g = build_basic_rnn_graph_with_list()
+##g = build_multilayer_lstm_graph_with_dynamic_rnn()
+##g = build_multilayer_lstm_graph_with_scan()
+g = build_final_graph(cell_type='LN_LSTM', state_size=state_size, 
+                     num_classes=num_classes, 
+                     batch_size=batch_size, 
+                     num_steps=num_steps, num_layers=3, 
+                     build_with_dropout=False, 
+                     learning_rate=learning_rate)
+print("构建图耗时", time.time()-start_time)
+start_time = time.time()
+losses = train_rnn(g, 2, save='saves/LN_LSTM_2_epochs')
+print("训练耗时：", time.time()-start_time)
+print('1',losses[-1])
 
 
 
-'''2、生成文本'''
-g = build_final_graph(cell_type='LN_LSTM', num_steps=1, batch_size=1)
-text = generate_characters(g, "saves/LN_LSTM_2_epochs", 750, prompt='A', pick_top_chars=5)
-print(text)
+#'''2、生成文本'''
+#g = build_final_graph(cell_type='LN_LSTM', num_steps=1, batch_size=1)
+#text = generate_characters(g, "saves/LN_LSTM_2_epochs", 750, prompt='A', pick_top_chars=5)
+#print(text)
