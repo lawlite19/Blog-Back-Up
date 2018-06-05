@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Author: Lawlite
 # Date: 2018/02/28
-# Associate Blog: 
+# Associate Blog: http://lawlite.me/2018/02/28/%E9%A3%8E%E6%A0%BC%E8%BF%81%E7%A7%BBStyle-transfer/
 # License: MIT
 import numpy as np
 from keras import backend as K
