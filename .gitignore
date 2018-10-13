@@ -1,2 +1,4 @@
 MNIST_data/
 logs/
+.idea/
+__pycache__/
