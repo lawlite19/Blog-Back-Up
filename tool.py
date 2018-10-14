@@ -100,6 +100,7 @@ def handle_photo():
     src_dir, des_dir = "photos/", "min_photos/"
     file_list = list_img_file(src_dir)
     list_info = []
+    file_list.sort(key=lambda x: x.split('_')[0])   # 按照日期排序
     for i in range(len(file_list)):
         filename = file_list[i]
         date_str, info = filename.split("_")
