@@ -50,4 +50,18 @@ def eval_input_fn(features, labels, batch_size):
     dataset = dataset.batch(batch_size)
     return dataset
 
+CSV_TYPES = [[0.0], [0.0], [0.0], [0.0], [0]]
+def _parse_line(line):
+    '''解析一行数据'''
+    field = tf.decode_csv(line, record_defaults=CSV_TYPES)
+    features = dict(zip(CSV_COLUMN_NAMES, field))
+    labels = features.pop("Species")
+    return features, labels
+
+def csv_input_fn(csv_path, batch_size):
+    '''csv文件输入函数'''
+    dataset = tf.data.TextLineDataset(csv_path).skip(1)   # 跳过第一行
+    dataset = dataset.map(_parse_line)        # 应用map函数处理dataset中的每一个元素
+    dataset = dataset.shuffle(1000).repeat().batch(batch_size)
+    return dataset
     

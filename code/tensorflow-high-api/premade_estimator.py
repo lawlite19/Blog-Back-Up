@@ -29,8 +29,10 @@ def main(argv):
                                     model_dir='model/',
                                     config=my_checkpoint_config)
     # 训练模型
-    cls.train(input_fn=lambda:iris_data.train_input_fn(train_x, train_y, args.batch_size),
-              steps=args.train_steps)
+    # cls.train(input_fn=lambda:iris_data.train_input_fn(train_x, train_y, args.batch_size),
+    #           steps=args.train_steps)
+    cls.train(input_fn=lambda:iris_data.csv_input_fn('iris_training.csv', args.batch_size),
+                steps = args.train_steps)
     # 评价模型
     eval_res = cls.evaluate(input_fn=lambda:iris_data.eval_input_fn(test_x, test_y, args.batch_size))
     print("\n Test Set accuracy: {:0.3f}\n".format(eval_res['accuracy']))
@@ -43,8 +45,6 @@ def main(argv):
         'PetalLength': [1.7, 4.2, 5.4],
         'PetalWidth':  [0.5, 1.5, 2.1],        
     }
-    cls.predict(input_fn, predict_keys=None, hooks=None, checkpoint_path=None, 
-               yield_single_examples=True)
     predictions = cls.predict(input_fn=lambda:iris_data.eval_input_fn(predict_x, 
                                                                       labels=None,
                                                                       batch_size=args.batch_size))
