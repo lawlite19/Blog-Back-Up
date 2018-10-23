@@ -103,7 +103,7 @@ def test_get_anchor_negative_triplet_mask(labels):
 def test_batch_hard_triplet_loss(margin):
     # 还是得到两两的距离pairwise_distances
     # 计算最大的positive距离，只需要取每行最大元素即可
-    # 计算最小的negative距离，不能直接取每行最小的元素，
+    # 计算最小的negative距离，不能直接取每行最小的元素，因为invalid的[a, n]设置为0，这里设置invalid的位置为每一行最大的值，这样就可以取每一行最小的值了
     labels = np.array([1, 0, 1])
     pairwise_distances = test_pairwise_distances()
     mask_anchor_positive = test_anchor_positive_triplet_mask(labels)
