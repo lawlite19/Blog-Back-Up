@@ -5,7 +5,7 @@
 # License: MIT
 import tensorflow as tf
 
-def _pairwise_distance(embeddings, squared=False):
+def _pairwise_distances(embeddings, squared=False):
     '''
        计算两两embedding的距离
        ------------------------------------------
@@ -26,7 +26,7 @@ def _pairwise_distance(embeddings, squared=False):
     distances = tf.expand_dims(square_norm, axis=1) - 2.0 * dot_product + tf.expand_dims(square_norm, axis=0)
     distances = tf.maximum(distances, 0.0)   # 小于0的距离置为0
     if not squared:          # 如果不平方，就开根号，但是注意有0元素，所以0的位置加上 1e*-16
-        mask = tf.to_float(tf.equal(dot_product, 0.0))
+        mask = tf.to_float(tf.equal(distances, 0.0))
         distances = distances + mask * 1e-16
         distances = tf.sqrt(distances)
         distances = distances * (1.0 - mask)    # 0的部分仍然置为0
@@ -80,7 +80,7 @@ def batch_all_triplet_loss(labels, embeddings, margin, squared=False):
     
     # 得到每两两embeddings的距离，然后增加一个维度，一维需要得到（batch_size, batch_size, batch_size）大小的3D矩阵
     # 然后再点乘上valid 的 mask即可
-    pairwise_dis = _pairwise_distance(embeddings, squared=squared)
+    pairwise_dis = _pairwise_distances(embeddings, squared=squared)
     anchor_positive_dist = tf.expand_dims(pairwise_dis, 2)
     assert anchor_positive_dist.shape[2] == 1, "{}".format(anchor_positive_dist.shape)
     anchor_negative_dist = tf.expand_dims(pairwise_dis, 1)
@@ -143,7 +143,7 @@ def batch_hard_triplet_loss(labels, embeddings, margin, squared=False):
        Returns:
           triplet_loss: scalar, 一个batch的损失值
     '''
-    pairwise_distances = _pairwise_distance(embeddings)
+    pairwise_distances = _pairwise_distances(embeddings, squared=squared)
     mask_anchor_positive = _get_anchor_positive_triplet_mask(labels)
     mask_anchor_positive = tf.to_float(mask_anchor_positive)
     anchor_positive_dist = tf.multiply(mask_anchor_positive, pairwise_distances)

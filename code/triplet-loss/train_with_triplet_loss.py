@@ -18,7 +18,7 @@ def train_input_fn(data_dir, params):
 
     Args:
         data_dir: (string) path to the data directory
-        params: (Params) contains hyperparameters of the model (ex: `params.num_epochs`)
+        params: (dict) contains hyperparameters of the model
     """
     dataset = mnist_dataset.train(data_dir)
     dataset = dataset.shuffle(params['train_size'])  # whole dataset into the buffer
@@ -33,7 +33,7 @@ def test_input_fn(data_dir, params):
 
     Args:
         data_dir: (string) path to the data directory
-        params: (Params) contains hyperparameters of the model (ex: `params.num_epochs`)
+        params: (dict) contains hyperparameters of the model
     """
     dataset = mnist_dataset.test(data_dir)
     dataset = dataset.batch(params['batch_size'])
@@ -90,7 +90,7 @@ def my_model(features, labels, mode, params):
         tf.summary.scalar('fraction_positive_triplets', fraction)
     tf.summary.image('train_image', images, max_outputs=1)
     
-    optimizer = tf.train.AdamOptimizer(params['learning_rate'])
+    optimizer = tf.train.AdamOptimizer(learning_rate=params['learning_rate'])
     global_step = tf.train.get_global_step()
     if params['use_batch_norm']:
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
