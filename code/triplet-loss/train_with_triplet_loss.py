@@ -78,8 +78,9 @@ def my_model(features, labels, mode, params):
         raise ValueError("triplet_strategy 配置不正确: {}".format(params['triplet_strategy']))
     
     embedding_mean_norm = tf.reduce_mean(tf.norm(embeddings, axis=1))
+    tf.summary.scalar("embedding_mean_norm", embedding_mean_norm)
     with tf.variable_scope("metrics"):
-        eval_metric_ops = {'embedding_mean_norm': embedding_mean_norm}
+        eval_metric_ops = {'embedding_mean_norm': tf.metrics.mean(embedding_mean_norm)}
         if params['triplet_strategy'] == 'batch_all':
             eval_metric_ops['fraction_positive_triplets'] = tf.metrics.mean(fraction)
     if mode == tf.estimator.ModeKeys.EVAL:

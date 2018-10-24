@@ -123,5 +123,5 @@ def test_batch_hard_triplet_loss(margin):
     return triplet_loss
 
 if __name__ == '__main__':
-    #test_batch_all_triplet_loss(margin = 0.0)
-    test_batch_hard_triplet_loss(margin = 0.0)
+    test_batch_all_triplet_loss(margin = 0.0)
+    #test_batch_hard_triplet_loss(margin = 0.0)
