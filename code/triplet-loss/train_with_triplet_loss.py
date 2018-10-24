@@ -107,7 +107,7 @@ def main(argv):
     params = {
         "learning_rate": 1e-3,
         "batch_size": 64,
-        "num_epochs": 10,
+        "num_epochs": 20,
     
         "num_channels": 32,
         "use_batch_norm": False,
@@ -124,13 +124,13 @@ def main(argv):
     
         "num_parallel_calls": 4        
     }
-    config = tf.estimator.RunConfig(model_dir=args.model_dir, tf_random_seed=100)
+    config = tf.estimator.RunConfig(model_dir=args.model_dir, tf_random_seed=230)
     cls = tf.estimator.Estimator(model_fn=my_model, config=config, params=params)
     tf.logging.info("开始训练模型,共{} epochs....".format(params['num_epochs']))
     cls.train(input_fn = lambda: train_input_fn(args.data_dir, params))
     
     tf.logging.info("测试集评价模型....")
-    res = cls.evaluate(input_fn = lambda: test_input_fn(args.data_dit, params))
+    res = cls.evaluate(input_fn = lambda: test_input_fn(args.data_dir, params))
     for key in res:
         print("{} : {}".format(key, res[key]))
 
