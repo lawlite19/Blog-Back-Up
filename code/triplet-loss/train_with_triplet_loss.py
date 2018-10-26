@@ -9,6 +9,8 @@ from triplet_loss import batch_all_triplet_loss
 from triplet_loss import batch_hard_triplet_loss
 import mnist_dataset
 
+
+'''参数， 指定数据地址，和保存模型地址'''
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='data',type=str, help="数据地址")
 parser.add_argument('--model_dir', default='experiment/model', type=str, help="模型地址")
@@ -41,6 +43,17 @@ def test_input_fn(data_dir, params):
     return dataset
 
 def build_model(is_training, images, params):
+    '''
+       建立模型
+       ----------------------------
+       Args：
+          is_training: bool, 是否是训练阶段，可以从mode中判断
+          images：     (batch_size, 28*28*1), 输入mnist数据
+          params:      dict, 一些超参数
+          
+       Returns:
+          out: 输出的embeddings, shape = (batch_size, 64)
+    '''
     num_channel = params['num_channels']
     bn_momentum = params['bn_momentum']
     channels = [num_channel, num_channel * 2]
@@ -59,16 +72,26 @@ def build_model(is_training, images, params):
     return out
 
 def my_model(features, labels, mode, params):
+    '''
+       model_fn指定函数，构建模型，训练等
+       ---------------------------------
+       Args:
+          features: 输入，shape = (batch_size, 784)
+          labels:   输出，shape = (batch_size, )
+          mode:     str, 阶段
+          params:   dict, 超参数
+    '''
     is_training = (mode == tf.estimator.ModeKeys.TRAIN)
     images = features
-    images = tf.reshape(images, shape=[-1, params['image_size'], params['image_size'], 1])
+    images = tf.reshape(images, shape=[-1, params['image_size'], params['image_size'], 1])  # reshape (batch_size, img_size, img_size, 1)
     with tf.variable_scope("model"):
-        embeddings = build_model(is_training, images, params)
+        embeddings = build_model(is_training, images, params)  # 简历模型
     
-    if mode == tf.estimator.ModeKeys.PREDICT:
+    if mode == tf.estimator.ModeKeys.PREDICT:     # 如果是预测阶段，直接返回得到embeddings
         predictions = {'embeddings': embeddings}
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
     
+    '''调用对应的triplet loss'''
     labels = tf.cast(labels, tf.int64)
     if params['triplet_strategy'] == 'batch_all':
         loss, fraction = batch_all_triplet_loss(labels, embeddings, margin=params['margin'], squared=params['squared'])
@@ -77,7 +100,7 @@ def my_model(features, labels, mode, params):
     else:
         raise ValueError("triplet_strategy 配置不正确: {}".format(params['triplet_strategy']))
     
-    embedding_mean_norm = tf.reduce_mean(tf.norm(embeddings, axis=1))
+    embedding_mean_norm = tf.reduce_mean(tf.norm(embeddings, axis=1))     # 这里计算了embeddings的二范数的均值 
     tf.summary.scalar("embedding_mean_norm", embedding_mean_norm)
     with tf.variable_scope("metrics"):
         eval_metric_ops = {'embedding_mean_norm': tf.metrics.mean(embedding_mean_norm)}
@@ -89,11 +112,14 @@ def my_model(features, labels, mode, params):
     tf.summary.scalar('loss', loss)
     if params['triplet_strategy'] == "batch_all":
         tf.summary.scalar('fraction_positive_triplets', fraction)
-    tf.summary.image('train_image', images, max_outputs=1)
+    tf.summary.image('train_image', images, max_outputs=1)   # 1代表1个channel
     
     optimizer = tf.train.AdamOptimizer(learning_rate=params['learning_rate'])
     global_step = tf.train.get_global_step()
     if params['use_batch_norm']:
+        '''如果使用BN，需要估计batch上的均值和方差，tf.get_collection(tf.GraphKeys.UPDATE_OPS)就可以得到
+        tf.control_dependencies计算完之后再进行里面的操作
+        '''
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
             train_op = optimizer.minimize(loss, global_step=global_step)
     else:
@@ -115,7 +141,7 @@ def main(argv):
         "bn_momentum": 0.9,
         "margin": 0.5,
         "embedding_size": 64,
-        "triplet_strategy": "batch_all",
+        "triplet_strategy": "batch_hard",
         "squared": False,
     
         "image_size": 28,
@@ -125,15 +151,15 @@ def main(argv):
     
         "num_parallel_calls": 4        
     }
-    config = tf.estimator.RunConfig(model_dir=args.model_dir, tf_random_seed=230)
-    cls = tf.estimator.Estimator(model_fn=my_model, config=config, params=params)
+    config = tf.estimator.RunConfig(model_dir=args.model_dir, tf_random_seed=100)  # config
+    cls = tf.estimator.Estimator(model_fn=my_model, config=config, params=params)  # 建立模型
     tf.logging.info("开始训练模型,共{} epochs....".format(params['num_epochs']))
-    cls.train(input_fn = lambda: train_input_fn(args.data_dir, params))
+    cls.train(input_fn = lambda: train_input_fn(args.data_dir, params))            # 训练模型，指定输入
     
     tf.logging.info("测试集评价模型....")
-    res = cls.evaluate(input_fn = lambda: test_input_fn(args.data_dir, params))
+    res = cls.evaluate(input_fn = lambda: test_input_fn(args.data_dir, params))    # 测试模型，指定输入
     for key in res:
-        print("{} : {}".format(key, res[key]))
+        print("评价---{} : {}".format(key, res[key]))
 
 if __name__ == '__main__':
     tf.reset_default_graph()
