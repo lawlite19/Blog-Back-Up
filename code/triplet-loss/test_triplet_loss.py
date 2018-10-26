@@ -264,11 +264,11 @@ def test_batch_hard_triplet_loss():
 
 #test_pairwise_distances()
 #test_gradients_pairwise_distances()
-#test_anchor_positive_triplet_mask()
-#test_anchor_negative_triplet_mask()
 #test_triplet_mask()
 #test_pairwise_distances_are_positive()
-test_batch_all_triplet_loss()
+#test_batch_all_triplet_loss()
+#test_anchor_positive_triplet_mask()
+#test_anchor_negative_triplet_mask()
 #test_batch_hard_triplet_loss()
 
 

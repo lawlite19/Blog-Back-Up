@@ -66,7 +66,8 @@ def _get_triplet_mask(labels):
 
 def batch_all_triplet_loss(labels, embeddings, margin, squared=False):
     '''
-       triplet loss of a batch
+       triplet loss of a batch, 注意这里的loss一般不是收敛的，因为是计算的semi-hard和hard的距离均值，因为每次是先选择出semi-hard和hard
+       triplet, 那么上次优化后的可能就选择不到了，所以loss并不会收敛，但是fraction_postive_triplets是收敛的，因为随着优化占的比例是越来越少的
        -------------------------------
        Args:
           labels:     标签数据，shape = （batch_size,）
