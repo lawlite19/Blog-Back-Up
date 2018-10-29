@@ -24,6 +24,7 @@ parser.add_argument('--model_dir', default='experiment/model', type=str, help="�
 parser.add_argument('--model_config', default='experiment/params.json', type=str, help="模型参数")
 parser.add_argument('--sprite_filename', default='experiment/mnist_10k_sprite.png',
                     help="Sprite image for the projector")
+parser.add_argument('--log_dir', default='experiment/log', type=str, help='可视化embeddings log文件夹')
 
 def main(argv):
     args = parser.parse_args(argv[1:])
@@ -51,15 +52,15 @@ def main(argv):
         labels_tensor = dataset.make_one_shot_iterator().get_next()
         labels = sess.run(labels_tensor)   
     
-    np.savetxt(os.path.join(args.model_dir, 'metadata.tsv'), labels, fmt='%d')
-    shutil.copy(args.sprite_filename, args.model_dir)
+    np.savetxt(os.path.join(args.log_dir, 'metadata.tsv'), labels, fmt='%d')
+    shutil.copy(args.sprite_filename, args.log_dir)
     with tf.Session() as sess:
         embedding_var = tf.Variable(embeddings, name="mnist_embeddings")
-        #tf.global_variables_initializer().run()
+        tf.global_variables_initializer().run()
         
         saver = tf.train.Saver([embedding_var])
         sess.run(embedding_var.initializer)
-        saver.save(sess, os.path.join(args.model_dir, 'embeddings.ckpt'), global_step=0)
+        saver.save(sess, os.path.join(args.log_dir, 'embeddings.ckpt'), global_step=0)
         
         summary_writer = tf.summary.FileWriter(args.model_dir)
         config = projector.ProjectorConfig()
