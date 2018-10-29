@@ -1,8 +1,8 @@
 embeddings {
   tensor_name: "mnist_embeddings:0"
-  metadata_path: "experiment/log/metadata.tsv"
+  metadata_path: "metadata.tsv"
   sprite {
-    image_path: "experiment/log/mnist_10k_sprite.png"
+    image_path: "mnist_10k_sprite.png"
     single_image_dim: 28
     single_image_dim: 28
   }
