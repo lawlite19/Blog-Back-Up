@@ -23,7 +23,7 @@ np.savetxt(os.path.join(LOG_DIR, META_DATA_FILE), mnist.test.labels[:IMAGE_NUM],
 
 '''可视化embedding, 3个步骤'''
 with tf.Session() as sess:
-    '''1、 将2D矩阵放入Variable中国'''
+    '''1、 将2D矩阵放入Variable中'''
     embeddings_var = tf.Variable(plot_array, name='embedding')
     tf.global_variables_initializer().run()
     
