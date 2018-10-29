@@ -37,14 +37,15 @@ def main(argv):
     tf.logging.info("预测....")
     
     predictions = cls.predict(input_fn=lambda: test_input_fn(args.data_dir, params))
-    embeddings = np.zeros((10000, params['embedding_size']))
+    embeddings = np.zeros((params['eval_size'], params['embedding_size']))
     for i, p in enumerate(predictions):
-        #if i>=params['eval_size']:
-         #   break
+        if i>=params['eval_size']:
+            break
         embeddings[i] = p['embeddings']
     tf.logging.info("embeddings shape: {}".format(embeddings.shape))
     
-    with tf.Session() as sess:
+    g1 = tf.Graph()
+    with tf.Session(graph=g1) as sess:
         # Obtain the test labels
         dataset = mnist_dataset.test(args.data_dir)
         dataset = dataset.map(lambda img, lab: lab)
@@ -52,15 +53,15 @@ def main(argv):
         labels_tensor = dataset.make_one_shot_iterator().get_next()
         labels = sess.run(labels_tensor)   
     
-    np.savetxt(os.path.join(args.log_dir, 'metadata.tsv'), labels, fmt='%d')
+    np.savetxt(os.path.join(args.log_dir, 'metadata.tsv'), labels[:params['eval_size']], fmt='%d')
     shutil.copy(args.sprite_filename, args.log_dir)
-    with tf.Session() as sess:
+    with tf.Session(graph=g1) as sess:
         embedding_var = tf.Variable(embeddings, name="mnist_embeddings")
         tf.global_variables_initializer().run()
         
-        saver = tf.train.Saver([embedding_var])
+        saver = tf.train.Saver()
         sess.run(embedding_var.initializer)
-        saver.save(sess, os.path.join(args.log_dir, 'embeddings.ckpt'), global_step=0)
+        saver.save(sess, os.path.join(args.log_dir, 'embeddings.ckpt'))
         
         summary_writer = tf.summary.FileWriter(args.model_dir)
         config = projector.ProjectorConfig()

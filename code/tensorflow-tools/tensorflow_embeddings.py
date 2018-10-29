@@ -28,9 +28,9 @@ with tf.Session() as sess:
     tf.global_variables_initializer().run()
     
     '''2、 保存到文件中'''
-    saver = tf.train.Saver([embeddings_var])
+    saver = tf.train.Saver()
     sess.run(embeddings_var.initializer)
-    saver.save(sess, os.path.join(LOG_DIR, "model.ckpt"), global_step=0)
+    saver.save(sess, os.path.join(LOG_DIR, "model.ckpt"))
     
     '''3、 关联metadata和sprite图片'''
     summary_writer = tf.summary.FileWriter(LOG_DIR)
