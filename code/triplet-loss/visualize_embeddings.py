@@ -5,9 +5,11 @@
 # License: MIT
 
 import os
+import shutil
 import numpy as np
 import tensorflow as tf
 import argparse
+import json
 from triplet_loss import batch_all_triplet_loss
 from triplet_loss import batch_hard_triplet_loss
 import mnist_dataset
@@ -15,34 +17,18 @@ from train_with_triplet_loss import my_model
 from train_with_triplet_loss import test_input_fn
 from tensorflow.contrib.tensorboard.plugins import projector
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='data',type=str, help="数据地址")
 parser.add_argument('--model_dir', default='experiment/model', type=str, help="模型地址")
-parser.add_argument('--sprite_filename', default='experiments/mnist_10k_sprite.png',
+parser.add_argument('--model_config', default='experiment/params.json', type=str, help="模型参数")
+parser.add_argument('--sprite_filename', default='experiment/mnist_10k_sprite.png',
                     help="Sprite image for the projector")
 
 def main(argv):
     args = parser.parse_args(argv[1:])
-    params = {
-        "learning_rate": 1e-3,
-        "batch_size": 64,
-        "num_epochs": 1,
-    
-        "num_channels": 32,
-        "use_batch_norm": False,
-        "bn_momentum": 0.9,
-        "margin": 0.5,
-        "embedding_size": 64,
-        "triplet_strategy": "batch_all",
-        "squared": False,
-    
-        "image_size": 28,
-        "num_labels": 10,
-        "train_size": 50000,
-        "eval_size": 10000,
-    
-        "num_parallel_calls": 4        
-    }
+    with open(args.model_config) as f:
+        params = json.load(f)
     tf.logging.info("创建模型....")
     config = tf.estimator.RunConfig(model_dir=args.model_dir, tf_random_seed=100)  # config
     cls = tf.estimator.Estimator(model_fn=my_model, config=config, params=params)  # 建立模型
@@ -63,9 +49,10 @@ def main(argv):
         dataset = dataset.map(lambda img, lab: lab)
         dataset = dataset.batch(params['eval_size'])
         labels_tensor = dataset.make_one_shot_iterator().get_next()
-        labels = sess.run(labels_tensor)    
+        labels = sess.run(labels_tensor)   
+    
     np.savetxt(os.path.join(args.model_dir, 'metadata.tsv'), labels, fmt='%d')
-
+    shutil.copy(args.sprite_filename, args.model_dir)
     with tf.Session() as sess:
         embedding_var = tf.Variable(embeddings, name="mnist_embeddings")
         #tf.global_variables_initializer().run()

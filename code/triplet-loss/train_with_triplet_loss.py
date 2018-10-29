@@ -8,12 +8,14 @@ import argparse
 from triplet_loss import batch_all_triplet_loss
 from triplet_loss import batch_hard_triplet_loss
 import mnist_dataset
+import json
 
 
 '''参数， 指定数据地址，和保存模型地址'''
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='data',type=str, help="数据地址")
 parser.add_argument('--model_dir', default='experiment/model', type=str, help="模型地址")
+parser.add_argument('--model_config', default='experiment/params.json', type=str, help="模型参数")
 
 def train_input_fn(data_dir, params):
     """Train input function for the MNIST dataset.
@@ -131,26 +133,8 @@ def my_model(features, labels, mode, params):
 def main(argv):
     args = parser.parse_args(argv[1:])
     tf.logging.info("创建模型....")
-    params = {
-        "learning_rate": 1e-3,
-        "batch_size": 64,
-        "num_epochs": 1,
-    
-        "num_channels": 32,
-        "use_batch_norm": False,
-        "bn_momentum": 0.9,
-        "margin": 0.5,
-        "embedding_size": 64,
-        "triplet_strategy": "batch_all",
-        "squared": False,
-    
-        "image_size": 28,
-        "num_labels": 10,
-        "train_size": 50000,
-        "eval_size": 1000,
-    
-        "num_parallel_calls": 4        
-    }
+    with open(args.model_config) as f:
+        params = json.load(f)
     config = tf.estimator.RunConfig(model_dir=args.model_dir, tf_random_seed=100)  # config
     cls = tf.estimator.Estimator(model_fn=my_model, config=config, params=params)  # 建立模型
     tf.logging.info("开始训练模型,共{} epochs....".format(params['num_epochs']))
