@@ -134,20 +134,20 @@ def main(argv):
     params = {
         "learning_rate": 1e-3,
         "batch_size": 64,
-        "num_epochs": 20,
+        "num_epochs": 1,
     
         "num_channels": 32,
         "use_batch_norm": False,
         "bn_momentum": 0.9,
         "margin": 0.5,
         "embedding_size": 64,
-        "triplet_strategy": "batch_hard",
+        "triplet_strategy": "batch_all",
         "squared": False,
     
         "image_size": 28,
         "num_labels": 10,
         "train_size": 50000,
-        "eval_size": 10000,
+        "eval_size": 1000,
     
         "num_parallel_calls": 4        
     }

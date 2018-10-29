@@ -26,20 +26,20 @@ def main(argv):
     params = {
         "learning_rate": 1e-3,
         "batch_size": 64,
-        "num_epochs": 20,
+        "num_epochs": 1,
     
         "num_channels": 32,
         "use_batch_norm": False,
         "bn_momentum": 0.9,
         "margin": 0.5,
         "embedding_size": 64,
-        "triplet_strategy": "batch_hard",
+        "triplet_strategy": "batch_all",
         "squared": False,
     
         "image_size": 28,
         "num_labels": 10,
         "train_size": 50000,
-        "eval_size": 1000,
+        "eval_size": 10000,
     
         "num_parallel_calls": 4        
     }
@@ -50,10 +50,10 @@ def main(argv):
     tf.logging.info("预测....")
     
     predictions = cls.predict(input_fn=lambda: test_input_fn(args.data_dir, params))
-    embeddings = np.zeros((params['eval_size'], params['embedding_size']))
+    embeddings = np.zeros((10000, params['embedding_size']))
     for i, p in enumerate(predictions):
-        if i>=params['eval_size']:
-            break
+        #if i>=params['eval_size']:
+         #   break
         embeddings[i] = p['embeddings']
     tf.logging.info("embeddings shape: {}".format(embeddings.shape))
     
@@ -65,10 +65,10 @@ def main(argv):
         labels_tensor = dataset.make_one_shot_iterator().get_next()
         labels = sess.run(labels_tensor)    
     np.savetxt(os.path.join(args.model_dir, 'metadata.tsv'), labels, fmt='%d')
-    
+
     with tf.Session() as sess:
         embedding_var = tf.Variable(embeddings, name="mnist_embeddings")
-        tf.global_variables_initializer().run()
+        #tf.global_variables_initializer().run()
         
         saver = tf.train.Saver([embedding_var])
         sess.run(embedding_var.initializer)
@@ -77,7 +77,7 @@ def main(argv):
         summary_writer = tf.summary.FileWriter(args.model_dir)
         config = projector.ProjectorConfig()
         embedding = config.embeddings.add()
-        embedding.tensor_name = embeddings_var.name
+        embedding.tensor_name = embedding_var.name
         embedding.metadata_path = 'mnist_10k_sprite.png'
         embedding.sprite.image_path = 'metadata.tsv'
         embedding.sprite.single_image_dim.extend([28, 28])
@@ -85,5 +85,7 @@ def main(argv):
 
 
 if __name__ == '__main__':
+    tf.reset_default_graph()
+    tf.logging.set_verbosity(tf.logging.INFO)    
     tf.app.run(main)
         
