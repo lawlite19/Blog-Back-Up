@@ -149,7 +149,7 @@ def batch_hard_triplet_loss(labels, embeddings, margin, squared=False):
     mask_anchor_positive = tf.to_float(mask_anchor_positive)
     anchor_positive_dist = tf.multiply(mask_anchor_positive, pairwise_distances)
     hardest_positive_dist = tf.reduce_max(anchor_positive_dist, axis=1, keepdims=True)  # 取每一行最大的值即为最大positive距离
-    tf.summary.scalar("hardest_positive_dis", tf.reduce_mean(hardest_positive_dist))
+    tf.summary.scalar("hardest_positive_dist", tf.reduce_mean(hardest_positive_dist))
     
     '''取每一行最小值得时候，因为invalid [a, n]置为了0， 所以不能直接取，这里对应invalid位置加上每一行的最大值即可，然后再取最小的值'''
     mask_anchor_negative = _get_anchor_negative_triplet_mask(labels)

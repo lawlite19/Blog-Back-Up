@@ -27,20 +27,22 @@ parser.add_argument('--log_dir', default='experiment/log', type=str, help='可�
 
 def main(argv):
     args = parser.parse_args(argv[1:])
+    '''创建模型'''
     with open(args.model_config) as f:
         params = json.load(f)
     tf.logging.info("创建模型....")
     config = tf.estimator.RunConfig(model_dir=args.model_dir, tf_random_seed=100)  # config
     cls = tf.estimator.Estimator(model_fn=my_model, config=config, params=params)  # 建立模型
     
+    '''预测得到embeddings'''
     tf.logging.info("预测....")
-    
     predictions = cls.predict(input_fn=lambda: test_input_fn(args.data_dir, params))
     embeddings = np.zeros((10000, params['embedding_size']))
     for i, p in enumerate(predictions):
         embeddings[i] = p['embeddings']
     tf.logging.info("embeddings shape: {}".format(embeddings.shape))
     
+    '''获得testset 的label 数据，并保存为metadata.tsv 文件'''
     with tf.Session() as sess:
         # Obtain the test labels
         dataset = mnist_dataset.test(args.data_dir)
@@ -48,17 +50,20 @@ def main(argv):
         dataset = dataset.batch(10000)
         labels_tensor = dataset.make_one_shot_iterator().get_next()
         labels = sess.run(labels_tensor)   
-    
     np.savetxt(os.path.join(args.log_dir, 'metadata.tsv'), labels, fmt='%d')
     shutil.copy(args.sprite_filename, args.log_dir)
+    '''可视化embeddings'''
     with tf.Session() as sess:
+        # 1. Variable
         embedding_var = tf.Variable(embeddings, name="mnist_embeddings")
-        #tf.global_variables_initializer().run()
+        #tf.global_variables_initializer().run()  # 不需要
         
+        # 2. 保存到文件中，embeddings.ckpt
         saver = tf.train.Saver()
         sess.run(embedding_var.initializer)
         saver.save(sess, os.path.join(args.log_dir, 'embeddings.ckpt'))
         
+        # 3. 关联metadata.tsv, 和mnist_10k_sprite.png
         summary_writer = tf.summary.FileWriter(args.log_dir)
         config = projector.ProjectorConfig()
         embedding = config.embeddings.add()
