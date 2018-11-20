@@ -3,7 +3,7 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.python import debug as tf_debug
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 
 '''超参数'''
 num_steps = 10
@@ -124,6 +124,5 @@ training_losses = train_rnn(num_epochs=5, num_steps=num_steps, state_size=state_
 print(training_losses[0])
 plt.plot(training_losses)
 plt.show()
-
 
 
