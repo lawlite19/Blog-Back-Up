@@ -2,6 +2,7 @@
 # https://github.com/ShaoqingRen/faster_rcnn/blob/master/functions/nms/nms.m
 # https://github.com/ShaoqingRen/faster_rcnn/blob/master/functions/nms/nms_multiclass.m
 import numpy as np
+import torch
 
 def nms_oneclass(detections, threshold):
     '''
@@ -40,8 +41,6 @@ def nms_oneclass(detections, threshold):
         indices = np.where(IOU<=threshold)[0]
         order = order[indices + 1]   # 注意indices + 1, 因为iou数组的元素相比order是少一个的
     return keep
-
-
 
 
 def nms_multiclass(detections, threshold):
@@ -83,7 +82,84 @@ def nms_multiclass(detections, threshold):
             order = order[indices + 1]
         res[j-4] = keep
     return res
-        
+
+
+def rescore(IOU, scores, threshold, type='gaussian'):
+    '''
+    根据IOU和本来的score重新打分，两种打分方式：
+    （1） linear:   score * (1-IOU)
+     (2) gaussian: score * exp(IOU*IOU/threshold)
+    ----------------------------------------------------------
+    Args:
+        IOU:       计算得到的IOU
+        scores:    候选框对应的得分
+        threshold: 高斯函数的方差
+        type:      string, 重新打分的方式
+    Returns:
+        scores：计算后的得分
+    '''
+    assert IOU.shape[0] == scores.shape[0]
+    if type == 'linear':
+        indices = np.where(IOU >= threshold)[0]
+        scores[indices] = scores[indices] * (1-IOU[indices])
+    else:
+        scores = scores * np.exp(- IOU ** 2 / threshold)
+    return scores
+
+def soft_nms(detections, threshold, max_detections):
+    '''
+    soft_nms实现
+    -----------------------------------------------------------
+    Args:
+        detections:     检测框坐标和每个类别的得分，array, [x1, y1, x2, y2, score1, score2...]
+        threshold:      这里是重新打分高斯函数的方差，一般是0.5
+        max_detections: 最多保留的候选框，-1代表和原detections个数一样，只是重新打分
+    Returns:
+
+    '''
+    if detections.shape[0] == 0:
+        return np.zeros((0, 5))
+    x1 = detections[:, 0]
+    y1 = detections[:, 1]
+    x2 = detections[:, 2]
+    y2 = detections[:, 3]
+    scores = detections[:, 4]
+    areas = (x2-x1+1) * (y2-y1+1)
+    order = scores.argsort()[::-1]
+    scores = scores[order]
+
+    if max_detections == -1:
+        max_detections = order.size
+
+    keep = np.zeros(max_detections, dtype=np.intp)
+    keep_cnt = 0
+
+    while order.size > 0 and keep_cnt < max_detections:
+        i = order[0]
+        detections[i, 4] = scores[0]
+        xx1 = np.maximum(x1[i], x1[order[1:]])
+        yy1 = np.maximum(y1[i], y1[order[1:]])
+        xx2 = np.minimum(x2[i], x2[order[1:]])
+        yy2 = np.minimum(y2[i], y2[order[1:]])
+        w = np.maximum(0.0, xx2-xx1+1)
+        h = np.maximum(0.0, yy2-yy1+1)
+        inter = w * h
+        IOU = inter / (areas[i] + areas[order[1:]] - inter)
+
+        order = order[1:]
+        scores = rescore(IOU, scores[1:], threshold)
+
+        tmp = scores.argsort()[::-1]
+        order = order[tmp]
+        scores = scores[tmp]
+
+        keep[keep_cnt] = i
+        keep_cnt += 1
+
+    keep = keep[:keep_cnt]
+    detections = detections[keep, :]
+    return detections
+
 
 if __name__ == '__main__':
     detections = np.array([[1,1,3,3,0.8,0.3],
@@ -91,5 +167,4 @@ if __name__ == '__main__':
                            [2,1,4,2,0.5,0.5]])
     print(nms_oneclass(detections, threshold=0.4))
     print(nms_multiclass(detections, threshold=0.4))
-        
-    
+    print(soft_nms(detections, threshold=0.4, max_detections=-1))
